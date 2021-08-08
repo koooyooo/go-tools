@@ -60,4 +60,7 @@ func TestMock(t *testing.T) {
 	s, err := d.DoSomething("hello")
 	assert.NoError(t, err)
 	assert.Equal(t, "test arg", s)
+
+	// assert everything specified with On and Return was called as expected.
+	testObj.AssertExpectations(t)
 }
