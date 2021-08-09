@@ -29,22 +29,24 @@ func TestAssertMany(t *testing.T) {
 }
 
 type Doer interface {
+	Do()
 	DoSomething(string) (string, error)
-}
-
-type DoerImpl struct{}
-
-func (i DoerImpl) DoSomething(s string) (string, error) {
-	return s + s, nil
 }
 
 type MockObject struct {
 	mock.Mock
 }
 
-// implements mock without any fixed value
-func (m MockObject) DoSomething(s string) (string, error) {
+func (m *MockObject) Do() {
+	// record calls
+	m.Called()
+}
+
+// be aware! the receiver should be pointer, unless method call won't be counted
+func (m *MockObject) DoSomething(s string) (string, error) {
+	// record calls
 	args := m.Called(s)
+	// setting return values
 	return args.String(0), args.Error(1)
 }
 
@@ -63,4 +65,39 @@ func TestMock(t *testing.T) {
 
 	// assert everything specified with On and Return was called as expected.
 	testObj.AssertExpectations(t)
+}
+
+func TestCallsPlane(t *testing.T) {
+	// creating testObj and told that
+	testObj := new(MockObject)
+	testObj.On("Do").Return()
+
+	// then, set mock to the interface
+	var d Doer
+	d = testObj
+	d.Do()
+	d.Do()
+	d.Do()
+
+	// on AssertCalled, argument is required
+	testObj.AssertCalled(t, "Do")
+	testObj.AssertNumberOfCalls(t, "Do", 3)
+}
+
+func TestCallsWithArgsAndReturns(t *testing.T) {
+	// creating testObj and told that
+	testObj := new(MockObject)
+	testObj.On("DoSomething", "hello").Return("test arg", nil)
+
+	// then, set mock to the interface
+	var d Doer
+	d = testObj
+	var err error
+	_, err = d.DoSomething("hello")
+	_, err = d.DoSomething("hello")
+	assert.NoError(t, err)
+
+	// on AssertCalled, argument is required
+	testObj.AssertCalled(t, "DoSomething", "hello")
+	testObj.AssertNumberOfCalls(t, "DoSomething", 2)
 }
