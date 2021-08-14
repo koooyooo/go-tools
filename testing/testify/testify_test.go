@@ -3,6 +3,8 @@ package testify
 import (
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/stretchr/testify/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -100,4 +102,21 @@ func TestCallsWithArgsAndReturns(t *testing.T) {
 	// on AssertCalled, argument is required
 	testObj.AssertCalled(t, "DoSomething", "hello")
 	testObj.AssertNumberOfCalls(t, "DoSomething", 2)
+}
+
+func TestSuite(t *testing.T) {
+	suite.Run(t, new(MySuite))
+}
+
+type MySuite struct {
+	suite.Suite
+	initialState int
+}
+
+func (s *MySuite) SetupTest() {
+	s.initialState = 10
+}
+
+func (s *MySuite) TestInitialized() {
+	s.Equal(10, s.initialState)
 }
